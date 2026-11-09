@@ -1,0 +1,1032 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B6E8A" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1A21" media="(prefers-color-scheme: dark)">
+<meta name="robots" content="noindex, nofollow">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Torn CRAE">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+  :root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
+</script>
+<title>Torn CRAE</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: 'var(--bg)', surface: 'var(--surface)', surface2: 'var(--surface-2)',
+          ink: 'var(--ink)', mute: 'var(--mute)', line: 'var(--line)',
+          accent: 'var(--accent)', 'accent-soft': 'var(--accent-soft)'
+        },
+        fontFamily: {
+          display: ['"Bricolage Grotesque"', 'system-ui', 'sans-serif'],
+          sans: ['Figtree', 'system-ui', 'sans-serif']
+        }
+      }
+    }
+  };
+</script>
+<style>
+  /* Disseny: una columna de mòbil, capçalera de controls que fa scroll, navegació fixa a baix (3 pestanyes).
+     Blau-verd tinta amb semàfor propi per a avisos. */
+  :root {
+    --bg: #EEF3F5;
+    --surface: #FFFFFF;
+    --surface-2: #E3ECF0;
+    --ink: #10232C;
+    --mute: #53697A;
+    --line: #CCD9E0;
+    --accent: #0B6E8A;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #D5ECF3;
+    --ok: #1B7F4C;
+    --ok-ink: #FFFFFF;
+    --ok-soft: #DDF1E6;
+    --warn: #8F5400;
+    --warn-soft: #FBEBCB;
+    --bad: #B3261E;
+    --bad-soft: #F9DEDB;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0C1A21; --surface: #13262F; --surface-2: #1B3340; --ink: #E6F0F4; --mute: #8EA6B3;
+      --line: #28424F; --accent: #4FC3E0; --accent-ink: #06222B; --accent-soft: #17414F;
+      --ok: #62D194; --ok-ink: #08281A; --ok-soft: #153B29; --warn: #F0B552; --warn-soft: #3E2E0C;
+      --bad: #FF8A80; --bad-soft: #471B18; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0C1A21; --surface: #13262F; --surface-2: #1B3340; --ink: #E6F0F4; --mute: #8EA6B3;
+    --line: #28424F; --accent: #4FC3E0; --accent-ink: #06222B; --accent-soft: #17414F;
+    --ok: #62D194; --ok-ink: #08281A; --ok-soft: #153B29; --warn: #F0B552; --warn-soft: #3E2E0C;
+    --bad: #FF8A80; --bad-soft: #471B18; color-scheme: dark;
+  }
+
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: Figtree, system-ui, sans-serif; font-size: 15px; line-height: 1.4;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 14px 104px;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+  h1, h2, .display { font-family: "Bricolage Grotesque", system-ui, sans-serif; text-wrap: balance; }
+  .label { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+  .mute { color: var(--mute); }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .card.rest { background: var(--surface-2); border-style: dashed; }
+
+  .seg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 14px; }
+  .seg.s3 { grid-template-columns: repeat(3, 1fr); }
+  .seg button { padding: 9px 2px; border-radius: 10px; font-weight: 600; font-size: 13.5px; color: var(--mute); }
+  .seg button[aria-checked="true"] { background: var(--accent); color: var(--accent-ink); }
+
+  .tg { display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left;
+        padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; min-width: 0; }
+  .tg .val { display: block; font-weight: 700; font-size: 14px; margin-top: 3px; }
+  .sw { flex: none; width: 38px; height: 22px; border-radius: 999px; background: var(--line); position: relative; transition: background .15s; }
+  .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--surface); transition: transform .15s; }
+  .tg[aria-checked="true"] .sw { background: var(--accent); }
+  .tg[aria-checked="true"] .sw::after { transform: translateX(16px); }
+
+  .pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .pill.bad { background: var(--bad-soft); color: var(--bad); }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .pill.ok { background: var(--ok-soft); color: var(--ok); }
+  .pill.info { background: var(--accent-soft); color: var(--accent); }
+  .pill.neu { background: var(--surface-2); color: var(--mute); }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; font-size: 14px;
+         padding: 9px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn.sm { padding: 6px 12px; font-size: 13px; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button { cursor: pointer; }
+  button:disabled { cursor: default; }
+
+  .list > li + li, .list > button + button, .list > .rut + .rut { border-top: 1px solid var(--line); }
+  .item { padding: 12px 0; }
+  .item .t { font-weight: 600; }
+  .meta { font-size: 13px; color: var(--mute); margin-top: 2px; }
+  .meta.bad { color: var(--bad); font-weight: 600; }
+  .meta.warn { color: var(--warn); font-weight: 600; }
+
+  .rut { display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left; padding: 12px 0; }
+  .rut .t { display: block; }
+  .rut.done .t { color: var(--mute); text-decoration: line-through; }
+  .rut:disabled .t { color: var(--mute); }
+  .chk { flex: none; width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--mute); display: grid; place-items: center; margin-top: 1px; color: var(--ok-ink); }
+  .rut.done .chk { background: var(--ok); border-color: var(--ok); }
+  .tag { display: inline-block; margin-top: 3px; font-size: 11px; font-weight: 600; color: var(--mute); background: var(--surface-2); padding: 1px 7px; border-radius: 999px; }
+  .quib { display: inline-block; font-weight: 700; font-size: 13px; letter-spacing: .02em; padding: 3px 10px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); }
+  .quib.none { background: var(--surface-2); color: var(--mute); font-weight: 600; }
+  .tag.warn { background: var(--warn-soft); color: var(--warn); }
+
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { padding: 7px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; border: 1px solid var(--line); background: var(--surface); color: var(--mute); }
+  .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+
+  .ico { flex: none; width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+  .ico.done { background: var(--ok-soft); color: var(--ok); }
+  .ico.off { background: var(--surface-2); color: var(--mute); }
+
+  nav.bottom { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--surface); border-top: 1px solid var(--line);
+               display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
+               padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
+  nav.bottom button { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 0; font-size: 11px; font-weight: 600; color: var(--mute); min-width: 0; }
+  nav.bottom .pip { width: 54px; height: 28px; border-radius: 999px; display: grid; place-items: center; }
+  nav.bottom button[aria-current="page"] { color: var(--accent); }
+  nav.bottom button[aria-current="page"] .pip { background: var(--accent-soft); }
+  nav.bottom .badge { position: absolute; top: -3px; right: 4px; min-width: 16px; height: 16px; border-radius: 999px; background: var(--bad); color: var(--bg); font-size: 10px; display: grid; place-items: center; padding: 0 4px; }
+
+  .scrim { position: fixed; inset: 0; z-index: 40; background: color-mix(in srgb, var(--ink) 50%, transparent); display: flex; align-items: flex-end; justify-content: center; }
+  .sheet { width: 100%; max-width: 560px; max-height: 88dvh; overflow-y: auto; background: var(--surface); border-radius: 20px 20px 0 0;
+           padding: 18px max(16px, env(safe-area-inset-left, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)); }
+  .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .field input, .field select, .field textarea { font: inherit; font-size: 16px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); width: 100%; min-width: 0; }
+  .field textarea { min-height: 84px; resize: vertical; }
+
+  @media (prefers-reduced-motion: reduce) { .sw, .sw::after { transition: none; } }
+</style>
+
+</head>
+<body>
+<div class="wrap" id="app">
+  <header class="flex flex-col gap-3" id="hdr"></header>
+  <main id="view" class="flex flex-col gap-4"></main>
+</div>
+<nav class="bottom" id="nav" aria-label="Seccions"></nav>
+<div id="sheetHost"></div>
+
+<script>
+/* =====================================================================
+   CONFIGURACIÓ DELS DOS GOOGLE SHEETS
+   ---------------------------------------------------------------------
+   Deixa en blanc per veure les dades d'exemple. Quan hi posis els enllaços,
+   l'app llegirà (i desarà) les dades reals.
+
+   OPCIÓ RECOMANADA: Google Apps Script desplegat com a "Aplicació web"
+   (Executa com: tu · Accés: qualsevol amb l'enllaç). Permet llegir i desar.
+   Enganxa'n l'URL acabada en /exec.
+
+   OPCIÓ NOMÉS LECTURA: Fitxer > Compartir > Publicar a la web > CSV de cada pestanya.
+   Amb CSV les modificacions no es desen al full.
+   ===================================================================== */
+const CONFIG = {
+  // FULL 1 (Feina): conté la pestanya de rutines i la d'agenda de feina
+  FEINA_URL: "",            // <-- URL /exec d'Apps Script del full de FEINA
+  FEINA_CSV_RUTINES: "",    // <-- (opcional) URL CSV de la pestanya de rutines
+  FEINA_CSV_AGENDA: "",     // <-- (opcional) URL CSV de la pestanya d'agenda de feina
+
+  // FULL 2 (Família): agenda de família
+  FAMILIA_URL: "",          // <-- URL /exec d'Apps Script del full FAMÍLIA
+  FAMILIA_CSV: "",          // <-- (opcional) URL CSV de la pestanya d'agenda de família
+
+  // FULL 3 (Personal): agenda personal. Deixa-ho en blanc fins que el tinguis creat.
+  PERSONAL_URL: "",         // <-- URL /exec d'Apps Script del full PERSONAL
+  PERSONAL_CSV: "",         // <-- (opcional) URL CSV de la pestanya d'agenda personal
+
+  // Noms exactes de les pestanyes dins de cada fitxer
+  PESTANYA_RUTINES: "Rutines fixes",   // al full de Feina
+  PESTANYA_FEINA: "Gestió",            // al full de Feina (agenda de feina)
+  PESTANYA_FAMILIA: "Família",         // al full Família (agenda de família)
+  PESTANYA_PERSONAL: "Personal",       // al full Personal (agenda personal)
+
+  // Un seguiment obert des de fa aquests dies o més surt als avisos
+  SEGUIMENT_AVIS_DIES: 7,
+
+  /* DIES NO ESCOLARS = caps de setmana + festius + vacances d'estiu i de Nadal.
+     L'app ho calcula sola cada dia i et deixa canviar-ho amb el commutador. */
+  FESTIUS: ['01-01','01-06','05-01','06-24','08-15','09-11','10-12','11-01','12-06','12-08','12-25','12-26'], // MM-DD
+  // El Divendres Sant i el Dilluns de Pasqua es calculen sols.
+  FESTIUS_EXTRA: [],   // <-- festius locals o de lliure disposició: 'AAAA-MM-DD'
+  VACANCES: [          // <-- ajusta-ho al calendari escolar de la teva zona (MM-DD, inclosos)
+    { nom: "Vacances de Nadal", des: '12-23', fins: '01-07' },
+    { nom: "Vacances d'estiu", des: '06-22', fins: '09-10' }
+  ]
+};
+
+/* Els URL també es poden guardar dins del dispositiu (botó "Fulls" de dalt a la dreta)
+   o amb un enllaç de configuració (#cfg=...). Així el fitxer que es penja no porta cap URL. */
+(function () {
+  const ok = v => typeof v === 'string' && /^https:\/\/script\.google\.com\/macros\//.test(v);
+  try {
+    const m = location.hash.match(/^#cfg=([A-Za-z0-9_-]+)/);
+    if (m) {
+      const j = JSON.parse(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')));
+      const cfg = {};
+      if (ok(j.f)) cfg.FEINA_URL = j.f;
+      if (ok(j.a)) cfg.FAMILIA_URL = j.a;
+      if (ok(j.p)) cfg.PERSONAL_URL = j.p;
+      localStorage.setItem('crae.cfg', JSON.stringify(cfg));
+      history.replaceState(null, '', location.pathname + location.search);
+    }
+  } catch (e) {}
+  try {
+    const saved = JSON.parse(localStorage.getItem('crae.cfg') || '{}');
+    ['FEINA_URL', 'FAMILIA_URL', 'PERSONAL_URL'].forEach(k => { if (!CONFIG[k] && ok(saved[k])) CONFIG[k] = saved[k]; });
+  } catch (e) {}
+})();
+
+/* CAPÇALERES (fila 1) que han de tenir les pestanyes:
+
+   Rutines fixes:  tipus_dia | franja | rutina | id | fet_el
+     Col. A tipus_dia: "Tots els dies" o "Diari" · "Dies escolars" · "Dies no escolars"
+                       o un o més dies de la setmana ("Dilluns", "Dimarts, Dijous"...)
+     Col. B franja:    "Inici de torn" · "Matí" · "Dia" · "Tarda" · "Nit" · "Fi de torn"
+
+     ESTRUCTURA DE TORNS (l'app ho aplica sola, a més del que posis a la col. A):
+       Dia escolar     -> torns Matí, Tarda i Nit.
+                          Matí i Tarda inclouen també les rutines d'"Inici de torn" i "Fi de torn".
+                          Nit només mostra les rutines de "Nit".
+       Dia NO escolar  -> torns Dia i Nit (cap de setmana, festiu o vacances).
+                          Dia inclou també "Inici de torn" i "Fi de torn". No hi ha Matí ni Tarda.
+     Per tant: les rutines de franja Matí o Tarda només surten en dia escolar,
+     i les de franja Dia només en dia no escolar.
+
+   Agenda de Feina (pestanya "Gestió"), de Família (pestanya "Família") i Personal (pestanya "Personal"),
+   MATEIXES capçaleres als tres fulls:
+     data_registre | persona_registra | tipus | qui | titol | explicacio | data | hora | responsable | estat | id | prioritat
+
+     data_registre:    dia en què es va apuntar la nota (l'app l'omple sola en crear-la)
+     persona_registra: qui crea o escriu la nota
+     tipus (col. C):   desplegable "Agenda" · "Tasca" · "Seguiment"
+     qui:              usuari/a a qui afecta la gestió (EFA, ECC, DRV, NR, FXX, AXX...) o "Llar" si afecta tota la llar
+     titol:            nom curt de la gestió
+     explicacio:       detall o notes de la gestió
+     data:             Agenda = dia de l'esdeveniment · Tasca = data límit
+                       Seguiment = dia que es va obrir (no té data de fi)
+     hora:             format 24 h (Format > Número > Format personalitzat > HH:mm)
+     responsable:      qui s'encarrega d'executar-la (no és qui l'ha apuntat)
+     estat:            Pendent · Fet · Cancel·lada (un seguiment tancat = Fet)
+     id:               l'omple l'app; si escrius una fila a mà, el script li posa un id sol
+     prioritat (col. L): desplegable Alta · Mitjana · Baixa (opcional). NO la posis a la columna de l'id.
+
+   CODI D'APPS SCRIPT (Extensions > Apps Script a cada full; mateix codi als tres).
+   Llegeix i desa pel NOM de la capçalera, així que serveix per a totes les pestanyes.
+
+   function doGet(e) {
+     const sh = SpreadsheetApp.getActive().getSheetByName(e.parameter.sheet);
+     const rng = sh.getDataRange(), v = rng.getValues(), d = rng.getDisplayValues();
+     const h = v[0].map(String), idc = h.indexOf('id');
+     const tz = SpreadsheetApp.getActive().getSpreadsheetTimeZone(), rows = [];
+     for (let i = 1; i < v.length; i++) {
+       if (v[i].every(x => x === '')) continue;
+       if (idc > -1 && v[i][idc] === '') {          // fila escrita a mà: se li posa un id
+         v[i][idc] = Utilities.getUuid().slice(0, 8);
+         sh.getRange(i + 1, idc + 1).setValue(v[i][idc]);
+       }
+       rows.push(Object.fromEntries(h.map((k, j) => [k,
+         v[i][j] instanceof Date
+           ? (k === 'hora' ? d[i][j] : Utilities.formatDate(v[i][j], tz, 'yyyy-MM-dd'))
+           : v[i][j]])));
+     }
+     return ContentService.createTextOutput(JSON.stringify({rows}))
+       .setMimeType(ContentService.MimeType.JSON);
+   }
+   function doPost(e) {
+     const lock = LockService.getScriptLock(); lock.waitLock(10000);
+     try {
+       const d = JSON.parse(e.postData.contents);
+       const sh = SpreadsheetApp.getActive().getSheetByName(d.sheet);
+       const v = sh.getDataRange().getValues(), h = v[0].map(String), c = h.indexOf('id');
+       const line = h.map(k => d.row[k] === undefined ? '' : d.row[k]);
+       const i = v.findIndex((r, j) => j > 0 && String(r[c]) === String(d.row.id));
+       if (i > 0) sh.getRange(i + 1, 1, 1, h.length).setValues([line]); else sh.appendRow(line);
+     } finally { lock.releaseLock(); }
+     return ContentService.createTextOutput('ok');
+   }
+*/
+
+/* ---------- Utilitats ---------- */
+const DIES = ['diumenge','dilluns','dimarts','dimecres','dijous','divendres','dissabte'];
+const MESOS = ['gener','febrer','març','abril','maig','juny','juliol','agost','setembre','octubre','novembre','desembre'];
+const MES_C = ['gen','feb','mar','abr','mai','jun','jul','ago','set','oct','nov','des'];
+const FRANGES = ['Inici de torn','Matí','Dia','Tarda','Nit','Fi de torn'];
+const TORNS = ['Matí','Tarda','Nit','Dia','Tots'];
+/* Franges que mostra cada torn (el torn "Tots" mostra totes les del tipus de dia) */
+const FRANJES_PER_TORN = {
+  'Matí':  ['Inici de torn','Matí','Fi de torn'],
+  'Tarda': ['Inici de torn','Tarda','Fi de torn'],
+  'Dia':   ['Inici de torn','Dia','Fi de torn'],
+  'Nit':   ['Nit']
+};
+/* Franges que existeixen segons el tipus de dia */
+const FRANJES_DIA = {
+  escolar:   ['Inici de torn','Matí','Tarda','Nit','Fi de torn'],
+  noescolar: ['Inici de torn','Dia','Nit','Fi de torn']
+};
+const tornsDisponibles = () => S.escola ? ['Matí','Tarda','Nit','Tots'] : ['Dia','Nit','Tots'];
+/* Si el torn triat no existeix en aquest tipus de dia, passa al seu equivalent */
+function ajustaTorn() {
+  const ok = tornsDisponibles();
+  if (ok.includes(S.torn)) return;
+  S.torn = (S.torn === 'Matí' || S.torn === 'Tarda') ? 'Dia' : S.torn === 'Dia' ? 'Matí' : ok[0];
+}
+const WDAYS = ['diumenge','dilluns','dimarts','dimecres','dijous','divendres','dissabte']; /* = Date.getDay() */
+const PRIOS = ['Alta','Mitjana','Baixa'];
+const QUIS_EXEMPLE = ['Llar','EFA','ECC','DRV','NR','FXX','AXX'];
+const TIPUS = ['Agenda','Tasca','Seguiment'];
+const TIPUS_TITOL = { Agenda: 'Agenda', Tasca: 'Tasques', Seguiment: 'Seguiments' };
+const EST = ['Pendent','Fet','Cancel·lada'];
+const ORIGEN = { feina: 'Feina', familia: 'Família', personal: 'Personal' };
+
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const T = () => iso(new Date());
+const addDays = n => { const d = new Date(); d.setDate(d.getDate()+n); return iso(d); };
+const diff = (a,b) => Math.round((new Date(a+'T00:00:00') - new Date(b+'T00:00:00')) / 864e5);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s ?? '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+const canon = (v, list, def) => list.find(x => norm(x) === norm(v)) || (def !== undefined ? def : list[0]);
+const uid = () => 'N' + Date.now().toString(36) + Math.floor(Math.random()*36).toString(36);
+const normRow = o => { const r = {}; for (const k in o) r[norm(k)] = o[k]; r.__c3 = Object.values(o)[2]; return r; };
+
+function dISO(v) {
+  if (!v) return '';
+  const s = String(v);
+  if (/T/.test(s)) { const d = new Date(s); return isNaN(d) ? '' : iso(d); }
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  return m ? `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}` : '';
+}
+function dHM(v) {
+  if (!v) return '';
+  const s = String(v);
+  if (/T/.test(s)) { const d = new Date(s); return isNaN(d) ? '' : `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+  const m = s.match(/^(\d{1,2}):(\d{2})/);
+  return m ? `${m[1].padStart(2,'0')}:${m[2]}` : '';
+}
+function relDay(d) {
+  const n = diff(d, T());
+  if (n === 0) return 'avui';
+  if (n === 1) return 'demà';
+  if (n === -1) return 'ahir';
+  return n > 0 ? `d'aquí ${n} dies` : `fa ${-n} dies`;
+}
+const dShort = d => { const x = new Date(d+'T00:00:00'); return `${x.getDate()} ${MES_C[x.getMonth()]}`; };
+
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem('crae.'+k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('crae.'+k, JSON.stringify(v)); } catch (e) {} }
+};
+
+function parseCSV(t) {
+  const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (q) { if (c === '"') { if (t[i+1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(f); f = ''; }
+    else if (c === '\n') { row.push(f); rows.push(row); row = []; f = ''; }
+    else if (c !== '\r') f += c;
+  }
+  if (f || row.length) { row.push(f); rows.push(row); }
+  const [h, ...b] = rows;
+  return b.filter(r => r.some(x => x)).map(r => Object.fromEntries(h.map((k, i) => [k, r[i] ?? ''])));
+}
+
+/* ---------- Dies no escolars: cap de setmana, festius i vacances d'estiu i Nadal ---------- */
+function pasqua(y) {
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25),
+    g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4,
+    l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451),
+    mes = Math.floor((h + l - 7 * m + 114) / 31), dia = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(y, mes - 1, dia);
+}
+const enRang = (md, a, b) => a <= b ? (md >= a && md <= b) : (md >= a || md <= b);
+/* Retorna el motiu pel qual el dia no és escolar, o '' si és un dia d'escola. */
+function motiuNoEscolar(d = new Date()) {
+  if (d.getDay() === 0 || d.getDay() === 6) return 'Cap de setmana';
+  const full = iso(d), md = full.slice(5);
+  const p = pasqua(d.getFullYear()), dv = new Date(p), dl = new Date(p);
+  dv.setDate(p.getDate() - 2); dl.setDate(p.getDate() + 1);
+  if (CONFIG.FESTIUS.includes(md) || CONFIG.FESTIUS_EXTRA.includes(full) || full === iso(dv) || full === iso(dl)) return 'Festiu';
+  const v = CONFIG.VACANCES.find(x => enRang(md, x.des, x.fins));
+  return v ? v.nom : '';
+}
+
+/* ---------- Dades d'exemple (CRAE fictici, només inicials) ---------- */
+const RUT = [
+  ['Diari','Inici de torn',"Fitxar l'entrada i signar el full de relleu"],
+  ['Tots els dies','Inici de torn',"Llegir el quadern de comunicació del torn anterior"],
+  ['Tots els dies','Inici de torn',"Fer el recompte de menors presents i absents"],
+  ['Tots els dies','Inici de torn',"Revisar incidències i avisos de l'equip"],
+  ['Tots els dies','Inici de torn',"Comprovar la medicació pautada per al torn"],
+  ['Tots els dies','Matí',"Despertar els menors i comprovar la higiene personal"],
+  ['Tots els dies','Matí',"Supervisar l'esmorzar i les dietes especials"],
+  ['Dies escolars','Matí',"Revisar motxilles i material escolar"],
+  ['Dies escolars','Matí',"Coordinar el transport o l'acompanyament a l'escola"],
+  ['Dies escolars','Matí',"Avisar l'escola d'absències o retards"],
+  ['Tots els dies','Matí',"Supervisar la neteja i l'ordre de les habitacions"],
+  ['Tots els dies','Matí',"Administrar la medicació del matí i registrar-la"],
+  ['Dilluns','Matí',"Fer les trucades pendents amb serveis socials i EAIA"],
+  ['Dies escolars','Tarda',"Recollir els menors de l'escola"],
+  ['Tots els dies','Tarda',"Supervisar el berenar"],
+  ['Dies escolars','Tarda',"Acompanyar l'estona de deures i estudi"],
+  ['Dies no escolars','Dia',"Despertar els menors i comprovar la higiene personal"],
+  ['Dies no escolars','Dia',"Supervisar l'esmorzar i les dietes especials"],
+  ['Dies no escolars','Dia',"Administrar la medicació del matí i registrar-la"],
+  ['Dies no escolars','Dia',"Organitzar activitat de lleure o sortida"],
+  ['Dies no escolars','Dia',"Supervisar el dinar i la recollida de la cuina"],
+  ['Dies no escolars','Dia',"Atendre les visites de familiars programades"],
+  ['Dies no escolars','Dia',"Administrar la medicació de la tarda"],
+  ['Tots els dies','Tarda',"Atendre les visites de familiars programades"],
+  ['Dimarts, Dijous','Tarda',"Acompanyar activitats extraescolars i terapèutiques"],
+  ['Tots els dies','Tarda',"Registrar el seguiment educatiu individual"],
+  ['Tots els dies','Tarda',"Administrar la medicació de la tarda"],
+  ['Dimecres','Tarda',"Dinamitzar l'assemblea o l'espai de grup"],
+  ['Tots els dies','Nit',"Supervisar el sopar i la recollida de la cuina"],
+  ['Tots els dies','Nit',"Supervisar la dutxa i la higiene del vespre"],
+  ['Tots els dies','Nit',"Administrar la medicació del vespre"],
+  ['Tots els dies','Nit',"Revisar l'ús de mòbils i pantalles"],
+  ['Tots els dies','Nit',"Acompanyar l'hora d'anar a dormir"],
+  ['Tots els dies','Nit',"Ronda nocturna de les 00:00"],
+  ['Tots els dies','Nit',"Ronda nocturna de les 03:00"],
+  ['Tots els dies','Nit',"Revisar portes, finestres i alarmes"],
+  ['Dies escolars','Nit',"Preparar la roba i el material de l'endemà"],
+  ['Tots els dies','Fi de torn',"Completar el registre diari de cada menor"],
+  ['Tots els dies','Fi de torn',"Anotar les incidències al quadern de comunicació"],
+  ['Tots els dies','Fi de torn',"Comprovar que l'armari de medicació està tancat"],
+  ['Tots els dies','Fi de torn',"Deixar endreçades les zones comunes"],
+  ['Tots els dies','Fi de torn',"Repassar les tasques pendents de l'agenda"],
+  ['Tots els dies','Fi de torn',"Fer el relleu oral amb l'educador/a entrant"],
+  ['Tots els dies','Fi de torn',"Signar el full de relleu"],
+  ['Diari','Fi de torn',"Fitxar la sortida"]
+];
+const sampleRutines = () => RUT.map((x, i) => ({
+  id: 'R' + String(i+1).padStart(2,'0'), tipus_dia: x[0], franja: x[1], rutina: x[2],
+  fet_el: i < 4 ? T() : ''
+}));
+/* [tipus, dies fins a la data, hora, títol, qui, explicació, estat, responsable, persona que registra, dies des del registre] */
+const SAMPLE_FEINA = [
+  ['Agenda',0,'20:00',"Trucada amb l'avi d'A.B.",'EFA','Confirmar si pot venir diumenge.','Pendent','Marta','Jordi',-2],
+  ['Agenda',1,'10:00',"Reunió de l'equip educatiu",'Llar','','Pendent',"Tot l'equip",'Laia',-5],
+  ['Agenda',2,'11:30',"Reunió amb l'EAIA pel seguiment de M.R.",'ECC',"Portar l'informe trimestral.",'Pendent','Jordi','Marta',-4],
+  ['Agenda',-1,'18:15','Visita de la família de L.P.','DRV','Visita tranquil·la.','Fet','Laia','Laia',-6],
+  ['Tasca',0,'',"Trucar a l'EAIA per confirmar la data de l'informe",'ECC','','Pendent','Marta','Jordi',-3],
+  ['Tasca',2,'','Concertar cita amb el CSMIJ','EFA','Demanar horari de tarda per no perdre escola.','Pendent','Jordi','Marta',-1],
+  ['Tasca',-1,'','Renovar la targeta sanitària de K.S.','NR',"Falta el certificat d'empadronament.",'Pendent','Laia','Jordi',-7],
+  ['Tasca',5,'',"Signar l'autorització de sortida de colònies",'FXX','','Pendent','Marta','Marta',-1],
+  ['Tasca',-3,'','Enviar el PEI actualitzat a la tutora','AXX','','Fet','Jordi','Laia',-8],
+  ['Tasca',-2,'','Sortida de dissabte a la platja','Llar','Cancel·lada per previsió de pluja.','Cancel·lada','Laia','Laia',-6],
+  ['Seguiment',-6,'','Resposta de la tutora sobre el PEI de J.M.','AXX',"Mail enviat. Si no respon, trucar a l'escola.",'Pendent','Jordi','Jordi',-6],
+  ['Seguiment',-9,'',"Confirmació de plaça al casal d'hivern",'FXX',"Pendent de resposta de l'entitat.",'Pendent','Marta','Laia',-9],
+  ['Seguiment',-2,'',"Resposta de l'ajuntament pel carnet de transport",'NR','','Pendent','Laia','Marta',-2]
+];
+const SAMPLE_FAMILIA = [
+  ['Agenda',1,'20:30','Reunió amb els germans per repartir torns','Casa','','Pendent','Tots','Marta',-3],
+  ['Agenda',3,'09:15','Cita amb el dentista','Casa','','Pendent','Marta','Marta',-6],
+  ['Tasca',0,'','Recollir la comanda a la farmàcia','Casa','','Pendent','Jordi','Marta',-2],
+  ['Tasca',4,'','Pagar la quota de la mútua','Casa','','Pendent','Marta','Marta',-1],
+  ['Tasca',6,'','Demanar hora al fisioterapeuta','Casa','','Pendent','Laia','Jordi',0],
+  ['Tasca',-2,'','Renovar el carnet de la biblioteca','Casa','','Fet','Laia','Laia',-5],
+  ['Seguiment',-7,'','Resposta de la mútua sobre el reemborsament','Casa','Mail enviat. Esperar fins a 10 dies.','Pendent','Marta','Marta',-7],
+  ['Seguiment',-1,'',"Confirmació de la reserva de l'apartament de Nadal",'Casa','','Pendent','Jordi','Jordi',-1]
+];
+const PRIO_FEINA = ['','Mitjana','Alta','','Alta','Alta','Mitjana','Mitjana','Alta','Baixa','Mitjana','Mitjana','Baixa'];
+const PRIO_FAMILIA = ['Mitjana','','Alta','Mitjana','Baixa','Baixa','Mitjana','Alta'];
+const SAMPLE_PERSONAL = [
+  ['Agenda',2,'18:30','Classe de ioga','','','Pendent','Jo','Jo',-6],
+  ['Agenda',5,'20:00','Sopar amb les amigues','','','Pendent','Jo','Jo',-4],
+  ['Tasca',0,'','Comprar un regal d\'aniversari','','','Pendent','Jo','Jo',-2],
+  ['Tasca',3,'','Renovar l\'abonament de transport','','','Pendent','Jo','Jo',-1],
+  ['Tasca',-2,'','Tornar els llibres a la biblioteca','','','Fet','Jo','Jo',-5],
+  ['Seguiment',-5,'','Resposta del lampista pel pressupost','','Mail enviat. Si no respon, trucar.','Pendent','Jo','Jo',-5]
+];
+const PRIO_PERSONAL = ['','Baixa','Mitjana','Mitjana','','Baixa'];
+const sampleItems = (kind, rows, pre, prios) => rows.map((x, i) => ({
+  data_registre: addDays(x[9]), persona_registra: x[8], tipus: x[0], qui: x[4], titol: x[3], explicacio: x[5],
+  data: addDays(x[1]), hora: x[2], responsable: x[7], estat: x[6],
+  id: pre + String(i+1).padStart(2,'0'), prioritat: prios[i] || '', _k: kind
+}));
+
+/* ---------- Estat ---------- */
+const hNow = new Date().getHours();
+const tornAuto = hNow >= 6 && hNow < 14 ? 'Matí' : hNow >= 14 && hNow < 22 ? 'Tarda' : 'Nit';
+const escSaved = LS.get('escola', null);
+const S = {
+  tab: 'avui',
+  torn: TORNS.includes(LS.get('torn', tornAuto)) ? LS.get('torn', tornAuto) : tornAuto,
+  treballant: LS.get('treballant', true),
+  escola: escSaved && escSaved.d === T() ? escSaved.v : !motiuNoEscolar(),
+  fOri: 'Tot', fEst: 'Pendent', fQui: 'Tot', fMeves: false, jo: LS.get('jo', ''),
+  sync: 'demo', syncAt: '', fulls: {},
+  rutines: [], feina: [], familia: [], personal: []
+};
+ajustaTorn();
+const demoSaved = LS.get('demo', null);
+S.rutines = (demoSaved?.rutines?.[0] && demoSaved.rutines[0].tipus_dia !== undefined) ? demoSaved.rutines : sampleRutines();
+const demoOk = demoSaved?.feina?.[0]?.prioritat !== undefined && Array.isArray(demoSaved?.familia) && Array.isArray(demoSaved?.personal);
+S.feina = demoOk ? demoSaved.feina : sampleItems('feina', SAMPLE_FEINA, 'W', PRIO_FEINA);
+S.familia = demoOk ? demoSaved.familia : sampleItems('familia', SAMPLE_FAMILIA, 'F', PRIO_FAMILIA);
+S.personal = demoOk ? demoSaved.personal : sampleItems('personal', SAMPLE_PERSONAL, 'P', PRIO_PERSONAL);
+
+const APP = { rutines: CONFIG.FEINA_URL, feina: CONFIG.FEINA_URL, familia: CONFIG.FAMILIA_URL, personal: CONFIG.PERSONAL_URL };
+const CSV = { feina: CONFIG.FEINA_CSV_AGENDA, familia: CONFIG.FAMILIA_CSV, personal: CONFIG.PERSONAL_CSV };
+const SHEET = { rutines: CONFIG.PESTANYA_RUTINES, feina: CONFIG.PESTANYA_FEINA, familia: CONFIG.PESTANYA_FAMILIA, personal: CONFIG.PESTANYA_PERSONAL };
+const ORIGENS = ['feina', 'familia', 'personal'];
+const ITEMS = () => S.feina.concat(S.familia, S.personal);
+/* Quan ja hi ha algun full connectat, els fulls sense enllaç no mostren dades d'exemple. */
+const MODE_REAL = Boolean(CONFIG.FEINA_URL || CONFIG.FAMILIA_URL || CONFIG.PERSONAL_URL || CONFIG.FEINA_CSV_RUTINES || CONFIG.FEINA_CSV_AGENDA || CONFIG.FAMILIA_CSV || CONFIG.PERSONAL_CSV);
+const origenOk = k => ORIGENS.includes(k) && (!MODE_REAL || Boolean(APP[k] || CSV[k]));
+const origenDefecte = () => origenOk(S.fOri) ? S.fOri : (ORIGENS.find(origenOk) || 'feina');
+ORIGENS.forEach(k => { if (!origenOk(k)) S[k] = []; });
+const findItem = key => { const [k, id] = key.split('|'); return S[k].find(x => x.id === id); };
+const keyOf = x => `${x._k}|${x.id}`;
+
+/* ---------- Lectura i escriptura als Google Sheets ---------- */
+const mapRutina = o => ({ id: String(o.id || uid()),
+  tipus_dia: String(o.tipus_dia ?? o.tipus_de_dia ?? '').trim(),
+  franja: String(o.franja ?? o.franja_horaria ?? '').trim(),
+  rutina: String(o.rutina || ''), fet_el: dISO(o.fet_el) });
+const canonPrio = v => norm(v) === 'mitja' ? 'Mitjana' : canon(v, PRIOS, '');
+const canonEstat = v => { const k = norm(v);
+  if (['fet', 'feta', 'tancat', 'tancada', 'finalitzat'].includes(k)) return 'Fet';
+  return k.startsWith('cancel') ? 'Cancel·lada' : 'Pendent'; };
+const mapItem = kind => o => ({ data_registre: dISO(o.data_registre), persona_registra: String(o.persona_registra || ''),
+  tipus: canon(o.tipus ?? o.__c3, TIPUS, 'Tasca'), qui: String(o.qui || ''), titol: String(o.titol ?? o.tasca ?? ''),
+  explicacio: String(o.explicacio || ''), data: dISO(o.data), hora: dHM(o.hora), responsable: String(o.responsable || ''),
+  estat: canonEstat(o.estat), prioritat: canonPrio(o.prioritat), id: String(o.id || uid()), _k: kind });
+
+async function fetchTable(app, sheet, csv) {
+  if (app) {
+    const r = await fetch(`${app}${app.includes('?') ? '&' : '?'}sheet=${encodeURIComponent(sheet)}`);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const txt = await r.text();
+    let j;
+    try { j = JSON.parse(txt); } catch (e) {
+      throw new Error(/getDataRange|TypeError/.test(txt) ? `No troba la pestanya "${sheet}"` : "Resposta no vàlida. Comprova que la implementació tingui accés per a qualsevol persona");
+    }
+    if (j.error) throw new Error(String(j.error));
+    return (j.rows || j).map(normRow);
+  }
+  if (csv) {
+    const r = await fetch(csv);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return parseCSV(await r.text()).map(normRow);
+  }
+  return null;
+}
+
+async function loadAll() {
+  S.sync = 'loading'; renderHeader();
+  const jobs = [
+    ['rutines', CONFIG.FEINA_URL, SHEET.rutines, CONFIG.FEINA_CSV_RUTINES, mapRutina],
+    ['feina', CONFIG.FEINA_URL, SHEET.feina, CONFIG.FEINA_CSV_AGENDA, mapItem('feina')],
+    ['familia', CONFIG.FAMILIA_URL, SHEET.familia, CONFIG.FAMILIA_CSV, mapItem('familia')],
+    ['personal', CONFIG.PERSONAL_URL, SHEET.personal, CONFIG.PERSONAL_CSV, mapItem('personal')]
+  ];
+  let any = false, err = false;
+  await Promise.all(jobs.map(async ([k, app, sh, csv, map]) => {
+    try {
+      const rows = await fetchTable(app, sh, csv);
+      if (rows) { S[k] = rows.map(map).filter(x => x.id); any = true; S.fulls[k] = { st: 'ok', n: S[k].length }; }
+      else S.fulls[k] = { st: 'off' };
+    } catch (e) { err = true; S.fulls[k] = { st: 'err', msg: String(e.message || e) }; console.warn('No s\'ha pogut llegir ' + sh, e); }
+  }));
+  S.sync = err ? 'error' : any ? 'ok' : 'demo';
+  const n = new Date(); S.syncAt = `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+  renderAll();
+}
+
+async function persist(kind, item) {
+  if (APP[kind]) {
+    const row = { ...item }; delete row._k;
+    try {
+      await fetch(APP[kind], { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ sheet: SHEET[kind], action: 'upsert', row }) });
+      S.sync = 'ok';
+    } catch (e) { S.sync = 'error'; }
+    renderHeader();
+  } else {
+    LS.set('demo', { rutines: S.rutines, feina: S.feina, familia: S.familia, personal: S.personal });
+  }
+}
+
+/* ---------- Lògica de les rutines ---------- */
+const isDone = r => r.fet_el === T();
+/* Interpreta la columna A. Retorna null si el valor no es reconeix. */
+function parseDia(v) {
+  const k = norm(v);
+  if (k === '' || ['tots_els_dies', 'diari', 'cada_dia'].includes(k)) return { t: 'tots' };
+  if (['dies_escolars', 'dia_escolar'].includes(k)) return { t: 'escolar' };
+  if (['dies_no_escolars', 'dia_no_escolar'].includes(k)) return { t: 'noescolar' };
+  const dies = k.split('_').filter(x => x !== 'i');
+  if (dies.length && dies.every(x => WDAYS.includes(x))) return { t: 'dies', dies };
+  return null;
+}
+/* Columna A: el dia d'avui coincideix amb el patró de la rutina? */
+function coincideixDia(r) {
+  const d = parseDia(r.tipus_dia);
+  if (!d) return true; /* valor desconegut: es mostra amb un avís perquè no desaparegui */
+  if (d.t === 'tots') return true;
+  if (d.t === 'escolar') return S.escola;
+  if (d.t === 'noescolar') return !S.escola;
+  return d.dies.includes(WDAYS[new Date().getDay()]);
+}
+/* Columna B: la franja existeix en aquest tipus de dia i toca al torn triat? */
+const franjaDe = r => canon(r.franja, FRANGES, '');
+const franjaExisteix = r => FRANJES_DIA[S.escola ? 'escolar' : 'noescolar'].includes(franjaDe(r));
+function coincideixFranja(r) {
+  if (!franjaDe(r)) return S.torn === 'Tots'; /* franja no reconeguda: només a "Tots", amb avís */
+  if (!franjaExisteix(r)) return false;
+  if (S.torn === 'Tots') return true;
+  return FRANJES_PER_TORN[S.torn].includes(franjaDe(r));
+}
+const rutinesAvui = () => S.rutines.filter(r => coincideixDia(r) && (!franjaDe(r) || franjaExisteix(r)));
+const rutinesVisibles = () => S.rutines.filter(r => coincideixDia(r) && coincideixFranja(r));
+const rutinesInvalides = () => S.rutines.filter(r => !parseDia(r.tipus_dia) || !franjaDe(r)).length;
+
+/* ---------- Lògica de l'agenda ---------- */
+function avisos() {
+  const out = [], t = T();
+  ITEMS().filter(x => x.estat === 'Pendent').forEach(x => {
+    const o = [x.qui, ORIGEN[x._k], x.responsable ? 'Resp. ' + x.responsable : ''].filter(Boolean).join(' · ');
+    const n = x.data ? diff(x.data, t) : null;
+    if (x.tipus === 'Tasca') {
+      if (n !== null && n < 0) out.push({ lvl: 0, kind: 'bad', tag: 'Vençuda', title: x.titol, meta: `${o} · ${relDay(x.data)}` });
+      else if (n === 0) out.push({ lvl: 1, kind: 'warn', tag: 'Per avui', title: x.titol, meta: o });
+      else if (x.prioritat === 'Alta' && n !== null && n <= 2) out.push({ lvl: 2, kind: 'warn', tag: 'Prioritat alta', title: x.titol, meta: `${o} · ${relDay(x.data)}` });
+    } else if (x.tipus === 'Agenda') {
+      if (n !== null && n < 0) out.push({ lvl: 0, kind: 'bad', tag: 'Sense tancar', title: x.titol, meta: `${o} · ${relDay(x.data)}` });
+      else if (n === 0) out.push({ lvl: 1, kind: 'info', tag: 'Agenda avui', title: x.titol, meta: `${o}${x.hora ? ' · ' + x.hora : ''}` });
+    } else if (n !== null && -n >= CONFIG.SEGUIMENT_AVIS_DIES) {
+      out.push({ lvl: 2, kind: 'warn', tag: 'Seguiment obert', title: x.titol, meta: `${o} · obert ${relDay(x.data)}` });
+    }
+  });
+  return out.sort((a, b) => a.lvl - b.lvl);
+}
+function dataMeta(x) {
+  const t = T(), pend = x.estat === 'Pendent';
+  if (!x.data) return { txt: x.tipus === 'Seguiment' ? 'Obert, sense data' : 'Sense data', cls: '' };
+  const n = diff(x.data, t);
+  if (x.tipus === 'Agenda') {
+    const past = pend && n < 0;
+    return { txt: `${dShort(x.data)}${x.hora ? ' · ' + x.hora : ''} (${relDay(x.data)})${past ? ' · sense tancar' : ''}`, cls: past ? 'bad' : (pend && n === 0 ? 'warn' : '') };
+  }
+  if (x.tipus === 'Tasca') return { txt: `Límit ${dShort(x.data)} (${relDay(x.data)})`, cls: pend && n < 0 ? 'bad' : (pend && n === 0 ? 'warn' : '') };
+  return { txt: `Obert des del ${dShort(x.data)} (${relDay(x.data)})`, cls: pend && -n >= CONFIG.SEGUIMENT_AVIS_DIES ? 'warn' : '' };
+}
+
+/* ---------- Icones ---------- */
+const P = {
+  home: '<path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/>',
+  list: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>',
+  cal: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+  task: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  sync: '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/>',
+  check: '<path d="M5 12l4.5 4.5L19 7"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>'
+};
+const ic = (n, s = 20) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
+
+/* ---------- Render ---------- */
+function renderHeader() {
+  const now = new Date();
+  const dl = `${DIES[now.getDay()]}, ${now.getDate()} de ${MESOS[now.getMonth()]}`;
+  const title = S.torn === 'Tots' ? 'Tots els torns' : 'Torn de ' + S.torn.toLowerCase();
+  const syncTxt = { demo: "Dades d'exemple", loading: 'Carregant…', ok: 'Sincronitzat ' + S.syncAt, error: 'Error en algun full' }[S.sync];
+  const syncCls = { demo: 'neu', loading: 'neu', ok: 'ok', error: 'bad' }[S.sync];
+  const mot = motiuNoEscolar();
+  const escVal = S.escola ? (mot ? 'Sí · canvi manual' : 'Sí') : (mot ? 'No · ' + mot.toLowerCase() : 'No · canvi manual');
+  document.getElementById('hdr').innerHTML = `
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <p class="label">${esc(dl)}</p>
+        <h1 class="text-[28px] leading-tight font-bold mt-1">${esc(title)}</h1>
+      </div>
+      <div class="flex flex-col items-end gap-2 flex-none">
+        <button class="pill ${syncCls}" data-act="refresh" aria-label="Actualitzar dades" style="padding:6px 10px;margin-top:2px">${ic('sync', 14)}<span>${esc(syncTxt)}</span></button>
+        <button class="btn sm" data-act="fulls" aria-label="Connexió amb els fulls">${ic('gear', 15)}Fulls</button>
+      </div>
+    </div>
+    <div class="seg" role="radiogroup" aria-label="Torn" style="grid-template-columns:repeat(${tornsDisponibles().length},1fr)">
+      ${tornsDisponibles().map(t => `<button role="radio" aria-checked="${S.torn === t}" data-act="torn" data-v="${t}">${t}</button>`).join('')}
+    </div>
+    <div class="grid grid-cols-2 gap-2">
+      <button class="tg" role="switch" aria-checked="${S.treballant}" data-act="estat">
+        <span class="min-w-0"><span class="label">Estat</span><span class="val">${S.treballant ? 'De torn / Treballant' : 'Lliure / Descans'}</span></span><span class="sw"></span>
+      </button>
+      <button class="tg" role="switch" aria-checked="${S.escola}" data-act="escola">
+        <span class="min-w-0"><span class="label">Avui hi ha escola</span><span class="val">${esc(escVal)}</span></span><span class="sw"></span>
+      </button>
+    </div>`;
+}
+
+function renderNav() {
+  const items = [['avui','Avui','home'], ['rutines','Rutines','list'], ['agenda','Agenda','cal']];
+  const urg = avisos().filter(a => a.lvl <= 1).length;
+  document.getElementById('nav').innerHTML = items.map(([k, l, i]) => `
+    <button data-act="tab" data-v="${k}" ${S.tab === k ? 'aria-current="page"' : ''}>
+      <span class="pip" style="position:relative">${ic(i, 21)}${k === 'agenda' && urg ? `<span class="badge">${urg}</span>` : ''}</span>${l}
+    </button>`).join('');
+}
+
+function ring(p) {
+  const c = 2 * Math.PI * 34;
+  return `<svg viewBox="0 0 80 80" width="92" height="92" role="img" aria-label="${Math.round(p*100)}% de rutines fetes">
+    <circle cx="40" cy="40" r="34" fill="none" stroke="var(--surface-2)" stroke-width="9"/>
+    <circle cx="40" cy="40" r="34" fill="none" stroke="var(--ok)" stroke-width="9" stroke-linecap="round"
+      stroke-dasharray="${(c * p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 40 40)"/>
+  </svg>`;
+}
+
+function rutRow(r, off) {
+  const d = isDone(r), pd = parseDia(r.tipus_dia);
+  const tags = [];
+  if (!pd) tags.push(['warn', 'Tipus de dia no reconegut']);
+  else if (pd.t !== 'tots' && !(pd.t === 'escolar' && ['Matí','Tarda'].includes(franjaDe(r))) && !(pd.t === 'noescolar' && franjaDe(r) === 'Dia')) tags.push(['', r.tipus_dia]);
+  if (!franjaDe(r)) tags.push(['warn', 'Franja no reconeguda']);
+  return `<button class="rut ${d ? 'done' : ''}" role="checkbox" aria-checked="${d}" data-act="rut" data-id="${esc(r.id)}" ${off ? 'disabled' : ''}>
+    <span class="chk">${d ? ic('check', 15) : ''}</span>
+    <span class="min-w-0"><span class="t">${esc(r.rutina)}</span>${tags.map(([c, t]) => `<span class="tag ${c}">${esc(t)}</span>`).join(' ')}</span>
+  </button>`;
+}
+
+function viewAvui() {
+  const vis = rutinesVisibles(), fetes = vis.filter(isDone).length, pend = vis.length - fetes;
+  const av = avisos(), oberts = ITEMS().filter(x => x.estat === 'Pendent').length;
+  const avui = ITEMS().filter(x => x.tipus === 'Agenda' && x.estat === 'Pendent' && x.data === T()).length;
+  let h = '';
+  if (S.treballant) {
+    h += `<section class="card flex items-center gap-4">
+      ${ring(vis.length ? fetes / vis.length : 0)}
+      <div class="min-w-0">
+        <p class="label">Rutines d'avui</p>
+        <p class="display text-[34px] font-bold leading-none mt-2 num">${fetes}<span class="mute text-xl font-medium"> / ${vis.length}</span></p>
+        <p class="meta">${pend ? `${pend} pendents` : 'Tot fet. Bon relleu!'} · ${oberts} elements oberts a l'agenda</p>
+      </div>
+    </section>`;
+  } else {
+    h += `<section class="card rest">
+      <p class="label">Descans</p>
+      <p class="display text-2xl font-bold mt-2">Avui no estàs de torn</p>
+      <p class="meta">Les rutines queden en pausa. Per quan tornis: ${oberts} elements oberts a l'agenda i ${avui} cites previstes avui.</p>
+      <button class="btn primary mt-3" data-act="estat">Posar-me de torn</button>
+    </section>`;
+  }
+  h += `<section class="card">
+    <div class="flex items-center justify-between gap-2"><h2 class="text-lg font-bold">Avisos prioritaris</h2><span class="pill ${av.length ? 'warn' : 'ok'}">${av.length || 'Cap'}</span></div>
+    ${av.length ? `<ul class="list mt-1">${av.map(a => `
+      <li class="item"><button class="w-full text-left" data-act="tab" data-v="agenda">
+        <div class="flex items-start justify-between gap-3"><p class="t min-w-0">${esc(a.title)}</p><span class="pill ${a.kind}">${esc(a.tag)}</span></div>
+        <p class="meta">${esc(a.meta)}</p></button></li>`).join('')}</ul>` : `<p class="meta mt-1">No hi ha cap avís pendent.</p>`}
+  </section>`;
+  if (S.treballant) {
+    const next = vis.filter(r => !isDone(r)).slice(0, 4);
+    h += `<section class="card">
+      <div class="flex items-center justify-between gap-2"><h2 class="text-lg font-bold">Properes rutines</h2>
+      <button class="btn sm" data-act="tab" data-v="rutines">Veure-les totes</button></div>
+      ${next.length ? `<div class="list mt-1">${next.map(r => rutRow(r, false)).join('')}</div>` : `<p class="meta mt-1">No et queda cap rutina en aquest torn.</p>`}
+    </section>`;
+  }
+  return h;
+}
+
+function viewRutines() {
+  const vis = rutinesVisibles(), fetes = vis.filter(isDone).length, off = !S.treballant;
+  const hoy = rutinesAvui().length, inv = rutinesInvalides();
+  let h = '';
+  if (off) h += `<section class="card rest"><p class="meta" style="margin:0">Estàs de descans. Canvia l'estat a "De torn" per marcar rutines.</p></section>`;
+  if (inv) h += `<section class="card"><p class="meta warn" style="margin:0">${inv} ${inv === 1 ? 'rutina té' : 'rutines tenen'} un valor no reconegut a la columna A (tipus de dia) o B (franja). Es mostren amb un avís.</p></section>`;
+  const mot = motiuNoEscolar();
+  const tipusDia = S.escola ? 'Dia escolar · torns matí, tarda i nit' + (mot ? ' (canvi manual)' : '')
+    : 'Dia no escolar' + (mot ? ' (' + mot.toLowerCase() + ')' : ' (canvi manual)') + ' · torns dia i nit';
+  h += `<section class="card"><p class="label">${esc(DIES[new Date().getDay()])}</p>
+    <p class="t" style="font-weight:700;margin-top:3px">${esc(tipusDia)}</p>
+    <p class="meta num">${vis.length} rutines per a ${S.torn === 'Tots' ? 'tots els torns' : 'el torn de ' + S.torn.toLowerCase()} · ${fetes} fetes · ${hoy} toquen avui de ${S.rutines.length}</p></section>`;
+  FRANGES.concat(['']).forEach(b => {
+    const rs = vis.filter(r => franjaDe(r) === b);
+    if (!rs.length) return;
+    const f = rs.filter(isDone).length;
+    h += `<section class="card"><div class="flex items-center justify-between gap-2">
+      <h2 class="text-lg font-bold">${b || 'Sense franja'}</h2><span class="pill ${f === rs.length ? 'ok' : 'neu'} num">${f}/${rs.length}</span></div>
+      <div class="list mt-1">${rs.map(r => rutRow(r, off)).join('')}</div></section>`;
+  });
+  if (!vis.length) h += `<section class="card"><p class="meta" style="margin:0">Cap rutina per a aquest filtre.</p></section>`;
+  return h;
+}
+
+const meu = x => S.jo && norm(x.responsable).includes(norm(S.jo));
+function agItem(x) {
+  const m = dataMeta(x), key = esc(keyOf(x)), pend = x.estat === 'Pendent';
+  const ico = { Agenda: 'cal', Tasca: 'task', Seguiment: 'eye' }[x.tipus];
+  const pc = { Alta: 'bad', Mitjana: 'warn', Baixa: 'neu' }[x.prioritat];
+  const estatTxt = x.tipus === 'Seguiment' ? (x.estat === 'Fet' ? 'Tancat' : x.estat) : x.estat;
+  const reg = (x.persona_registra ? ' per ' + esc(x.persona_registra) : '') + (x.data_registre ? ' el ' + dShort(x.data_registre) : '');
+  return `<li class="item flex gap-3">
+    <span class="ico ${x.estat === 'Fet' ? 'done' : (pend ? '' : 'off')}">${ic(ico, 18)}</span>
+    <div class="min-w-0 flex-1">
+      <div class="flex items-center justify-between gap-3" style="margin-bottom:4px"><span class="quib ${x.qui ? '' : 'none'}">${x.qui ? esc(x.qui) : (x._k === 'personal' ? 'Personal' : 'Sense usuari')}</span>${pc ? `<span class="pill ${pc}">${x.prioritat}</span>` : ''}</div>
+      <p class="t">${esc(x.titol)}</p>
+      <p class="meta ${m.cls}">${esc(m.txt)}</p>
+      <p class="meta">${ORIGEN[x._k]} · ${x.responsable ? 'Responsable: ' + esc(x.responsable) : 'Sense responsable'}${pend ? '' : ' · ' + estatTxt}</p>
+      ${x.explicacio ? `<p class="meta">${esc(x.explicacio)}</p>` : ''}
+      ${reg ? `<p class="meta" style="font-size:12px">Apuntat${reg}</p>` : ''}
+      <div class="flex gap-2 mt-2 flex-wrap">${pend
+        ? `<button class="btn sm primary" data-act="itstate" data-id="${key}" data-v="Fet">${x.tipus === 'Seguiment' ? 'Tancar' : 'Fet'}</button><button class="btn sm" data-act="itstate" data-id="${key}" data-v="Cancel·lada">Cancel·lar</button>`
+        : `<button class="btn sm" data-act="itstate" data-id="${key}" data-v="Pendent">Reobrir</button>`}
+        <button class="btn sm" data-act="nota" data-id="${key}">Editar</button></div>
+    </div></li>`;
+}
+
+function viewAgenda() {
+  const quis = [...new Set(ITEMS().map(x => x.qui).filter(Boolean))].sort();
+  if (S.fQui !== 'Tot' && !quis.includes(S.fQui)) S.fQui = 'Tot';
+  const base = ITEMS().filter(x => (S.fOri === 'Tot' || x._k === S.fOri) && (S.fQui === 'Tot' || x.qui === S.fQui) && (!S.fMeves || meu(x)));
+  const c = e => base.filter(x => x.estat === e).length;
+  const list = base.filter(x => x.estat === S.fEst);
+  const labels = { 'Pendent': 'Pendents', 'Fet': 'Fet', 'Cancel·lada': 'Cancel·lades' };
+  const asc = S.fEst === 'Pendent';
+  let h = `<div class="flex items-center justify-between gap-2"><h2 class="text-xl font-bold">Agenda</h2>
+    <button class="btn primary sm" data-act="newitem">${ic('plus', 16)}Nou</button></div>
+    <div class="seg" style="grid-template-columns:repeat(4,1fr)" role="radiogroup" aria-label="Origen">
+      ${[['Tot', 'Tot'], ['feina', 'Feina'], ['familia', 'Família'], ['personal', 'Personal']].map(([v, l]) => `<button role="radio" aria-checked="${S.fOri === v}" data-act="fori" data-v="${v}">${l}</button>`).join('')}
+    </div>
+    <div class="chips">${EST.map(e => `<button class="chip num" aria-pressed="${S.fEst === e}" data-act="fest" data-v="${e}">${labels[e]} · ${c(e)}</button>`).join('')}</div>
+    <div class="flex gap-2 items-end flex-wrap">
+      <div class="field flex-1" style="min-width:140px"><label class="label" for="f_fqui">Usuari</label>
+        <select id="f_fqui" data-chg="fqui"><option value="Tot">Tots</option>${quis.map(q => `<option ${q === S.fQui ? 'selected' : ''}>${esc(q)}</option>`).join('')}</select></div>
+      <button class="chip" aria-pressed="${S.fMeves}" data-act="meves">Les meves</button>
+      <button class="btn sm" data-act="jo">${S.jo ? 'Jo: ' + esc(S.jo) : 'Qui sóc?'}</button>
+    </div>`;
+  const sense = S.fOri !== 'Tot' && !origenOk(S.fOri);
+  if (sense) h += `<section class="card rest"><p class="meta" style="margin:0">El full ${ORIGEN[S.fOri]} encara no està connectat. Posa-hi l'URL a la configuració de dalt del fitxer.</p></section>`;
+  let any = false;
+  TIPUS.forEach(tp => {
+    const xs = list.filter(x => x.tipus === tp)
+      .sort((a, b) => { const k = (a.data || '9999') + (a.hora || '') > (b.data || '9999') + (b.hora || '') ? 1 : -1; return asc ? k : -k; });
+    if (!xs.length) return;
+    any = true;
+    h += `<section class="card"><div class="flex items-center justify-between gap-2"><h2 class="text-lg font-bold">${TIPUS_TITOL[tp]}</h2><span class="pill neu num">${xs.length}</span></div>
+      ${tp === 'Seguiment' ? `<p class="meta">Sense data de fi. Vetlla fins que es puguin tancar.</p>` : ''}
+      <ul class="list mt-1">${xs.map(agItem).join('')}</ul></section>`;
+  });
+  if (!any && !sense) h += `<section class="card"><p class="meta" style="margin:0">No hi ha res amb aquests filtres.</p></section>`;
+  return h;
+}
+
+function renderView() {
+  const v = { avui: viewAvui, rutines: viewRutines, agenda: viewAgenda }[S.tab];
+  document.getElementById('view').innerHTML = v();
+}
+function renderAll() { renderHeader(); renderNav(); renderView(); }
+
+/* ---------- Fulls de formulari ---------- */
+function openSheet(html) {
+  document.getElementById('sheetHost').innerHTML = `<div class="scrim" data-act="sheetx"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
+  const f = document.querySelector('#sheetHost input, #sheetHost textarea, #sheetHost select'); if (f) f.focus();
+}
+const closeSheet = () => { document.getElementById('sheetHost').innerHTML = ''; };
+const opts = (list, sel) => list.map(x => `<option ${x === sel ? 'selected' : ''}>${esc(x)}</option>`).join('');
+
+function formItem() {
+  openSheet(`<form data-form="item" class="flex flex-col gap-3">
+    <h2 class="text-xl font-bold">Nou element</h2>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="field"><label class="label" for="f_origen">Full</label>
+        <select id="f_origen" name="origen">${ORIGENS.filter(origenOk).map(k => `<option value="${k}" ${k === origenDefecte() ? 'selected' : ''}>${ORIGEN[k]}</option>`).join('')}</select></div>
+      <div class="field"><label class="label" for="f_tipus">Tipus</label><select id="f_tipus" name="tipus">${opts(TIPUS, 'Tasca')}</select></div>
+      <div class="field"><label class="label" for="f_qui">Usuari (a qui afecta)</label><input id="f_qui" name="qui" list="dl_qui" placeholder="EFA, ECC, Llar...">
+        <datalist id="dl_qui">${[...new Set(QUIS_EXEMPLE.concat(ITEMS().map(x => x.qui).filter(Boolean)))].map(q => `<option value="${esc(q)}">`).join('')}</datalist></div>
+      <div class="field"><label class="label" for="f_reg">Qui ho apunta</label><input id="f_reg" name="persona_registra" value="${esc(S.jo)}" placeholder="El teu nom"></div>
+    </div>
+    <div class="field"><label class="label" for="f_titol">Títol</label><input id="f_titol" name="titol" required placeholder="Què és?"></div>
+    <div class="field"><label class="label" for="f_expl">Explicació</label><textarea id="f_expl" name="explicacio"></textarea></div>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="field"><label class="label" for="f_data">Data</label><input id="f_data" name="data" type="date" value="${T()}"></div>
+      <div class="field"><label class="label" for="f_hora">Hora</label><input id="f_hora" name="hora" type="time"></div>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="field"><label class="label" for="f_resp">Responsable</label><input id="f_resp" name="responsable" placeholder="Qui ho ha de fer"></div>
+      <div class="field"><label class="label" for="f_prio">Prioritat</label><select id="f_prio" name="prioritat">${opts(['', ...PRIOS], 'Mitjana')}</select></div>
+    </div>
+    <p class="meta" style="margin:0">Agenda: dia de l'esdeveniment. Tasca: data límit. Seguiment: dia que s'obre; no té data de fi.</p>
+    <div class="flex gap-2 justify-end"><button type="button" class="btn" data-act="sheetx">Cancel·lar</button><button class="btn primary" type="submit">Desar</button></div>
+  </form>`);
+}
+function formNota(key) {
+  const x = findItem(key); if (!x) return;
+  openSheet(`<form data-form="nota" data-id="${esc(key)}" class="flex flex-col gap-3">
+    <h2 class="text-xl font-bold">${esc(x.titol)}</h2>
+    <div class="field"><label class="label" for="f_resp">Responsable</label><input id="f_resp" name="responsable" value="${esc(x.responsable)}"></div>
+    <div class="field"><label class="label" for="f_expl">Explicació</label><textarea id="f_expl" name="explicacio">${esc(x.explicacio)}</textarea></div>
+    <div class="flex gap-2 justify-end"><button type="button" class="btn" data-act="sheetx">Cancel·lar</button><button class="btn primary" type="submit">Desar</button></div>
+  </form>`);
+}
+function estatFull(k, nom) {
+  const f = S.fulls[k] || {};
+  const t = f.st === 'ok' ? `<span class="pill ok num">${f.n} files</span>` : f.st === 'err' ? `<span class="pill bad">Error</span>` : `<span class="pill neu">Sense enllaç</span>`;
+  return `<li class="flex items-start justify-between gap-3" style="padding:7px 0"><div class="min-w-0"><p class="t">${nom}</p>${f.st === 'err' ? `<p class="meta bad">${esc(f.msg)}</p>` : ''}</div>${t}</li>`;
+}
+function formFulls() {
+  const camp = (id, nm, label) => `<div class="field"><label class="label" for="${id}">${label}</label>
+    <input id="${id}" name="${nm}" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(CONFIG[nm])}" placeholder="https://script.google.com/macros/s/.../exec"></div>`;
+  openSheet(`<form data-form="fulls" class="flex flex-col gap-3">
+    <h2 class="text-xl font-bold">Connexió amb els fulls</h2>
+    <ul class="list">${[['rutines', 'Rutines fixes (Feina)'], ['feina', 'Gestió (Feina)'], ['familia', 'Família'], ['personal', 'Personal']].map(([k, n]) => estatFull(k, n)).join('')}</ul>
+    <p class="meta" style="margin:0">Enganxa l'URL de cada full (acaba en /exec). Es guarda només en aquest dispositiu.</p>
+    ${camp('f_u1', 'FEINA_URL', 'Full de Feina')}
+    ${camp('f_u2', 'FAMILIA_URL', 'Full de Família')}
+    ${camp('f_u3', 'PERSONAL_URL', 'Full Personal')}
+    <div class="flex gap-2 justify-end flex-wrap"><button type="button" class="btn" data-act="refreshf">Actualitzar</button><button type="button" class="btn" data-act="sheetx">Tancar</button><button class="btn primary" type="submit">Desar</button></div>
+  </form>`);
+}
+function formJo() {
+  openSheet(`<form data-form="jo" class="flex flex-col gap-3">
+    <h2 class="text-xl font-bold">Qui ets?</h2>
+    <p class="meta" style="margin:0">S'usa per omplir "qui ho apunta" i per filtrar les tasques de les quals ets responsable.</p>
+    <div class="field"><label class="label" for="f_jo">El teu nom</label><input id="f_jo" name="jo" value="${esc(S.jo)}" required></div>
+    <div class="flex gap-2 justify-end"><button type="button" class="btn" data-act="sheetx">Cancel·lar</button><button class="btn primary" type="submit">Desar</button></div>
+  </form>`);
+}
+
+/* ---------- Esdeveniments ---------- */
+const ACT = {
+  torn: (id, v) => { S.torn = v; LS.set('torn', v); renderAll(); },
+  estat: () => { S.treballant = !S.treballant; LS.set('treballant', S.treballant); renderAll(); },
+  escola: () => { S.escola = !S.escola; LS.set('escola', { d: T(), v: S.escola }); ajustaTorn(); renderAll(); },
+  tab: (id, v) => { S.tab = v; renderAll(); window.scrollTo(0, 0); },
+  refresh: () => loadAll(),
+  fulls: () => formFulls(),
+  refreshf: () => { closeSheet(); loadAll().then(formFulls); },
+  rut: id => { const r = S.rutines.find(x => x.id === id); if (!r) return; r.fet_el = isDone(r) ? '' : T(); renderAll(); persist('rutines', r); },
+  fest: (id, v) => { S.fEst = v; renderView(); },
+  fori: (id, v) => { S.fOri = v; renderView(); },
+  itstate: (key, v) => { const x = findItem(key); if (!x) return; x.estat = v; renderAll(); persist(x._k, x); },
+  nota: key => formNota(key),
+  jo: () => formJo(),
+  meves: () => { if (!S.jo && !S.fMeves) return formJo(); S.fMeves = !S.fMeves; renderView(); },
+  newitem: formItem,
+  sheetx: (id, v, el, ev) => { if (ev.target === el) closeSheet(); }
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  if (b.dataset.act === 'sheetx' && b.classList.contains('scrim') && e.target !== b) return;
+  ACT[b.dataset.act]?.(b.dataset.id, b.dataset.v, b, e);
+});
+document.addEventListener('submit', e => {
+  const f = e.target.closest('form[data-form]'); if (!f) return;
+  e.preventDefault();
+  const d = Object.fromEntries(new FormData(f).entries());
+  if (f.dataset.form === 'item') {
+    const kind = ORIGENS.includes(d.origen) ? d.origen : 'feina';
+    const x = mapItem(kind)({ id: uid(), data_registre: T(), persona_registra: d.persona_registra.trim(), tipus: d.tipus, qui: d.qui.trim(),
+      titol: d.titol.trim(), explicacio: d.explicacio, data: d.tipus === 'Seguiment' ? d.data : (d.data || T()), hora: d.hora,
+      responsable: d.responsable.trim(), prioritat: d.prioritat, estat: 'Pendent' });
+    S[kind].push(x); S.fEst = 'Pendent';
+    if (d.persona_registra.trim() && !S.jo) { S.jo = d.persona_registra.trim(); LS.set('jo', S.jo); }
+    persist(kind, x);
+  } else if (f.dataset.form === 'nota') {
+    const x = findItem(f.dataset.id);
+    if (x) { x.explicacio = d.explicacio || ''; x.responsable = (d.responsable || '').trim(); persist(x._k, x); }
+  } else if (f.dataset.form === 'jo') {
+    S.jo = d.jo.trim(); LS.set('jo', S.jo);
+  }
+  if (f.dataset.form === 'fulls') {
+    const cfg = {};
+    ['FEINA_URL', 'FAMILIA_URL', 'PERSONAL_URL'].forEach(k => { const v = (d[k] || '').trim(); if (/^https:\/\/script\.google\.com\/macros\//.test(v)) cfg[k] = v; });
+    try { localStorage.setItem('crae.cfg', JSON.stringify(cfg)); } catch (e) {}
+    closeSheet();
+    try { location.reload(); } catch (e) { renderAll(); }
+    return;
+  }
+  closeSheet(); renderAll();
+});
+document.addEventListener('change', e => {
+  const el = e.target.closest('[data-chg]');
+  if (el && el.dataset.chg === 'fqui') { S.fQui = el.value; renderView(); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+
+renderAll();
+loadAll();
+</script>
+</body>
+</html>
