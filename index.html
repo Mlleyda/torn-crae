@@ -256,7 +256,9 @@ const CONFIG = {
    Rutines fixes:  tipus_dia | franja | rutina | id | fet_el
      Col. A tipus_dia: "Tots els dies" o "Diari" · "Dies escolars" · "Dies no escolars"
                        o un o més dies de la setmana ("Dilluns", "Dimarts, Dijous"...)
-     Col. B franja:    "Inici de torn" · "Matí" · "Dia" · "Tarda" · "Nit" · "Fi de torn"
+     Col. B franja:    "Inici de torn" · "Durant el torn" · "Matí" · "Dia" · "Tarda" · "Nit" · "Fi de torn"
+                       (també s'entén "Inici torn" i "Fi torn", sense accents ni majúscules)
+                       "Durant el torn" surt a Matí, Tarda i Dia (no a Nit), juntament amb la seva franja.
 
      ESTRUCTURA DE TORNS (l'app ho aplica sola, a més del que posis a la col. A):
        Dia escolar     -> torns Matí, Tarda i Nit.
@@ -325,19 +327,19 @@ const CONFIG = {
 const DIES = ['diumenge','dilluns','dimarts','dimecres','dijous','divendres','dissabte'];
 const MESOS = ['gener','febrer','març','abril','maig','juny','juliol','agost','setembre','octubre','novembre','desembre'];
 const MES_C = ['gen','feb','mar','abr','mai','jun','jul','ago','set','oct','nov','des'];
-const FRANGES = ['Inici de torn','Matí','Dia','Tarda','Nit','Fi de torn'];
+const FRANGES = ['Inici de torn','Durant el torn','Matí','Dia','Tarda','Nit','Fi de torn'];
 const TORNS = ['Matí','Tarda','Nit','Dia','Tots'];
 /* Franges que mostra cada torn (el torn "Tots" mostra totes les del tipus de dia) */
 const FRANJES_PER_TORN = {
-  'Matí':  ['Inici de torn','Matí','Fi de torn'],
-  'Tarda': ['Inici de torn','Tarda','Fi de torn'],
-  'Dia':   ['Inici de torn','Dia','Fi de torn'],
+  'Matí':  ['Inici de torn','Durant el torn','Matí','Fi de torn'],
+  'Tarda': ['Inici de torn','Durant el torn','Tarda','Fi de torn'],
+  'Dia':   ['Inici de torn','Durant el torn','Dia','Fi de torn'],
   'Nit':   ['Nit']
 };
 /* Franges que existeixen segons el tipus de dia */
 const FRANJES_DIA = {
-  escolar:   ['Inici de torn','Matí','Tarda','Nit','Fi de torn'],
-  noescolar: ['Inici de torn','Dia','Nit','Fi de torn']
+  escolar:   ['Inici de torn','Durant el torn','Matí','Tarda','Nit','Fi de torn'],
+  noescolar: ['Inici de torn','Durant el torn','Dia','Nit','Fi de torn']
 };
 const tornsDisponibles = () => S.escola ? ['Matí','Tarda','Nit','Tots'] : ['Dia','Nit','Tots'];
 /* Si el torn triat no existeix en aquest tipus de dia, passa al seu equivalent */
@@ -362,7 +364,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const norm = s => String(s ?? '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
 const canon = (v, list, def) => list.find(x => norm(x) === norm(v)) || (def !== undefined ? def : list[0]);
 const uid = () => 'N' + Date.now().toString(36) + Math.floor(Math.random()*36).toString(36);
-const normRow = o => { const r = {}; for (const k in o) r[norm(k)] = o[k]; r.__c3 = Object.values(o)[2]; return r; };
+const normRow = o => { const r = {}; for (const k in o) r[norm(k)] = o[k]; const v = Object.values(o); r.__c1 = v[0]; r.__c2 = v[1]; r.__c3 = v[2]; return r; };
 
 function dISO(v) {
   if (!v) return '';
@@ -445,6 +447,8 @@ const RUT = [
   ['Dilluns','Matí',"Fer les trucades pendents amb serveis socials i EAIA"],
   ['Dies escolars','Tarda',"Recollir els menors de l'escola"],
   ['Tots els dies','Tarda',"Supervisar el berenar"],
+  ['Tots els dies','Durant el torn',"Atendre trucades i registrar les incidències del grup"],
+  ['Tots els dies','Durant el torn',"Acompanyar els menors en les gestions del dia"],
   ['Dies escolars','Tarda',"Acompanyar l'estona de deures i estudi"],
   ['Dies no escolars','Dia',"Despertar els menors i comprovar la higiene personal"],
   ['Dies no escolars','Dia',"Supervisar l'esmorzar i les dietes especials"],
@@ -559,9 +563,9 @@ const keyOf = x => `${x._k}|${x.id}`;
 
 /* ---------- Lectura i escriptura als Google Sheets ---------- */
 const mapRutina = o => ({ id: String(o.id || uid()),
-  tipus_dia: String(o.tipus_dia ?? o.tipus_de_dia ?? '').trim(),
-  franja: String(o.franja ?? o.franja_horaria ?? '').trim(),
-  rutina: String(o.rutina || ''), fet_el: dISO(o.fet_el) });
+  tipus_dia: String(o.tipus_dia ?? o.tipus_de_dia ?? o.__c1 ?? '').trim(),
+  franja: String(o.franja ?? o.franja_horaria ?? o.__c2 ?? '').trim(),
+  rutina: String(o.rutina || o.__c3 || ''), fet_el: dISO(o.fet_el) });
 const canonPrio = v => norm(v) === 'mitja' ? 'Mitjana' : canon(v, PRIOS, '');
 const canonEstat = v => { const k = norm(v);
   if (['fet', 'feta', 'tancat', 'tancada', 'finalitzat'].includes(k)) return 'Fet';
@@ -631,9 +635,9 @@ const isDone = r => r.fet_el === T();
 /* Interpreta la columna A. Retorna null si el valor no es reconeix. */
 function parseDia(v) {
   const k = norm(v);
-  if (k === '' || ['tots_els_dies', 'diari', 'cada_dia'].includes(k)) return { t: 'tots' };
-  if (['dies_escolars', 'dia_escolar'].includes(k)) return { t: 'escolar' };
-  if (['dies_no_escolars', 'dia_no_escolar'].includes(k)) return { t: 'noescolar' };
+  if (k === '' || ['tots_els_dies', 'tots_el_dies', 'tots_dies', 'tots', 'diari', 'cada_dia'].includes(k)) return { t: 'tots' };
+  if (['dies_escolars', 'dia_escolar', 'dies_d_escola', 'dia_d_escola', 'escolar', 'escolars'].includes(k)) return { t: 'escolar' };
+  if (['dies_no_escolars', 'dia_no_escolar', 'dies_sense_escola', 'no_escolar', 'no_escolars'].includes(k)) return { t: 'noescolar' };
   const dies = k.split('_').filter(x => x !== 'i');
   if (dies.length && dies.every(x => WDAYS.includes(x))) return { t: 'dies', dies };
   return null;
@@ -648,7 +652,11 @@ function coincideixDia(r) {
   return d.dies.includes(WDAYS[new Date().getDay()]);
 }
 /* Columna B: la franja existeix en aquest tipus de dia i toca al torn triat? */
-const franjaDe = r => canon(r.franja, FRANGES, '');
+const FRANJA_ALIES = { inici_torn: 'Inici de torn', inici_de_torn: 'Inici de torn', inici: 'Inici de torn',
+  durant_el_torn: 'Durant el torn', durant_torn: 'Durant el torn', durant: 'Durant el torn',
+  fi_torn: 'Fi de torn', fi_de_torn: 'Fi de torn', fi: 'Fi de torn', final_de_torn: 'Fi de torn', final_torn: 'Fi de torn', final: 'Fi de torn',
+  mati: 'Matí', dia: 'Dia', tarda: 'Tarda', nit: 'Nit' };
+const franjaDe = r => FRANJA_ALIES[norm(r.franja)] || '';
 const franjaExisteix = r => FRANJES_DIA[S.escola ? 'escolar' : 'noescolar'].includes(franjaDe(r));
 function coincideixFranja(r) {
   if (!franjaDe(r)) return S.torn === 'Tots'; /* franja no reconeguda: només a "Tots", amb avís */
@@ -759,9 +767,9 @@ function ring(p) {
 function rutRow(r, off) {
   const d = isDone(r), pd = parseDia(r.tipus_dia);
   const tags = [];
-  if (!pd) tags.push(['warn', 'Tipus de dia no reconegut']);
+  if (!pd) tags.push(['warn', `Tipus de dia no reconegut: «${r.tipus_dia}»`]);
   else if (pd.t !== 'tots' && !(pd.t === 'escolar' && ['Matí','Tarda'].includes(franjaDe(r))) && !(pd.t === 'noescolar' && franjaDe(r) === 'Dia')) tags.push(['', r.tipus_dia]);
-  if (!franjaDe(r)) tags.push(['warn', 'Franja no reconeguda']);
+  if (!franjaDe(r)) tags.push(['warn', `Franja no reconeguda: «${r.franja}»`]);
   return `<button class="rut ${d ? 'done' : ''}" role="checkbox" aria-checked="${d}" data-act="rut" data-id="${esc(r.id)}" ${off ? 'disabled' : ''}>
     <span class="chk">${d ? ic('check', 15) : ''}</span>
     <span class="min-w-0"><span class="t">${esc(r.rutina)}</span>${tags.map(([c, t]) => `<span class="tag ${c}">${esc(t)}</span>`).join(' ')}</span>
