@@ -256,18 +256,18 @@ const CONFIG = {
    Rutines fixes:  tipus_dia | franja | rutina | id | fet_el
      Col. A tipus_dia: "Tots els dies" o "Diari" · "Dies escolars" · "Dies no escolars"
                        o un o més dies de la setmana ("Dilluns", "Dimarts, Dijous"...)
-     Col. B franja:    "Inici de torn" · "Durant el torn" · "Matí" · "Dia" · "Tarda" · "Nit" · "Fi de torn"
+     Col. B franja:    "Inici de torn" · "Matí" · "Tarda" · "Nit" · "Fi de torn"
                        (també s'entén "Inici torn" i "Fi torn", sense accents ni majúscules)
-                       "Durant el torn" surt a Matí, Tarda i Dia (no a Nit), juntament amb la seva franja.
 
      ESTRUCTURA DE TORNS (l'app ho aplica sola, a més del que posis a la col. A):
        Dia escolar     -> torns Matí, Tarda i Nit.
                           Matí i Tarda inclouen també les rutines d'"Inici de torn" i "Fi de torn".
                           Nit només mostra les rutines de "Nit".
        Dia NO escolar  -> torns Dia i Nit (cap de setmana, festiu o vacances).
-                          Dia inclou també "Inici de torn" i "Fi de torn". No hi ha Matí ni Tarda.
-     Per tant: les rutines de franja Matí o Tarda només surten en dia escolar,
-     i les de franja Dia només en dia no escolar.
+                          El torn Dia inclou les rutines de franja Matí i Tarda (les que toquen al dia:
+                          "Dies no escolars", "Dissabte", "Diumenge", "Tots els dies"...),
+                          més "Inici de torn" i "Fi de torn". No cal cap franja "Dia" al full.
+     Les rutines de col. A "Dies escolars" no surten mai en dia no escolar, i les de "Dies no escolars" no surten mai en dia escolar.
 
    Agenda de Feina (pestanya "Gestió"), de Família (pestanya "Família") i Personal (pestanya "Personal"),
    MATEIXES capçaleres als tres fulls:
@@ -327,19 +327,19 @@ const CONFIG = {
 const DIES = ['diumenge','dilluns','dimarts','dimecres','dijous','divendres','dissabte'];
 const MESOS = ['gener','febrer','març','abril','maig','juny','juliol','agost','setembre','octubre','novembre','desembre'];
 const MES_C = ['gen','feb','mar','abr','mai','jun','jul','ago','set','oct','nov','des'];
-const FRANGES = ['Inici de torn','Durant el torn','Matí','Dia','Tarda','Nit','Fi de torn'];
+const FRANGES = ['Inici de torn','Matí','Dia','Tarda','Nit','Fi de torn'];
 const TORNS = ['Matí','Tarda','Nit','Dia','Tots'];
 /* Franges que mostra cada torn (el torn "Tots" mostra totes les del tipus de dia) */
 const FRANJES_PER_TORN = {
-  'Matí':  ['Inici de torn','Durant el torn','Matí','Fi de torn'],
-  'Tarda': ['Inici de torn','Durant el torn','Tarda','Fi de torn'],
-  'Dia':   ['Inici de torn','Durant el torn','Dia','Fi de torn'],
+  'Matí':  ['Inici de torn','Matí','Fi de torn'],
+  'Tarda': ['Inici de torn','Tarda','Fi de torn'],
+  'Dia':   ['Inici de torn','Matí','Dia','Tarda','Fi de torn'],   /* el torn Dia inclou el matí i la tarda */
   'Nit':   ['Nit']
 };
 /* Franges que existeixen segons el tipus de dia */
 const FRANJES_DIA = {
-  escolar:   ['Inici de torn','Durant el torn','Matí','Tarda','Nit','Fi de torn'],
-  noescolar: ['Inici de torn','Durant el torn','Dia','Nit','Fi de torn']
+  escolar:   ['Inici de torn','Matí','Tarda','Nit','Fi de torn'],
+  noescolar: ['Inici de torn','Matí','Dia','Tarda','Nit','Fi de torn']
 };
 const tornsDisponibles = () => S.escola ? ['Matí','Tarda','Nit','Tots'] : ['Dia','Nit','Tots'];
 /* Si el torn triat no existeix en aquest tipus de dia, passa al seu equivalent */
@@ -447,16 +447,14 @@ const RUT = [
   ['Dilluns','Matí',"Fer les trucades pendents amb serveis socials i EAIA"],
   ['Dies escolars','Tarda',"Recollir els menors de l'escola"],
   ['Tots els dies','Tarda',"Supervisar el berenar"],
-  ['Tots els dies','Durant el torn',"Atendre trucades i registrar les incidències del grup"],
-  ['Tots els dies','Durant el torn',"Acompanyar els menors en les gestions del dia"],
   ['Dies escolars','Tarda',"Acompanyar l'estona de deures i estudi"],
-  ['Dies no escolars','Dia',"Despertar els menors i comprovar la higiene personal"],
-  ['Dies no escolars','Dia',"Supervisar l'esmorzar i les dietes especials"],
-  ['Dies no escolars','Dia',"Administrar la medicació del matí i registrar-la"],
-  ['Dies no escolars','Dia',"Organitzar activitat de lleure o sortida"],
-  ['Dies no escolars','Dia',"Supervisar el dinar i la recollida de la cuina"],
-  ['Dies no escolars','Dia',"Atendre les visites de familiars programades"],
-  ['Dies no escolars','Dia',"Administrar la medicació de la tarda"],
+  ['Dies no escolars','Matí',"Despertar els menors i comprovar la higiene personal"],
+  ['Dies no escolars','Matí',"Supervisar l'esmorzar i les dietes especials"],
+  ['Dies no escolars','Matí',"Administrar la medicació del matí i registrar-la"],
+  ['Dissabte','Matí',"Organitzar activitat de lleure o sortida"],
+  ['Dies no escolars','Tarda',"Supervisar el dinar i la recollida de la cuina"],
+  ['Diumenge','Tarda',"Atendre les visites de familiars programades"],
+  ['Dies no escolars','Tarda',"Administrar la medicació de la tarda"],
   ['Tots els dies','Tarda',"Atendre les visites de familiars programades"],
   ['Dimarts, Dijous','Tarda',"Acompanyar activitats extraescolars i terapèutiques"],
   ['Tots els dies','Tarda',"Registrar el seguiment educatiu individual"],
@@ -653,7 +651,6 @@ function coincideixDia(r) {
 }
 /* Columna B: la franja existeix en aquest tipus de dia i toca al torn triat? */
 const FRANJA_ALIES = { inici_torn: 'Inici de torn', inici_de_torn: 'Inici de torn', inici: 'Inici de torn',
-  durant_el_torn: 'Durant el torn', durant_torn: 'Durant el torn', durant: 'Durant el torn',
   fi_torn: 'Fi de torn', fi_de_torn: 'Fi de torn', fi: 'Fi de torn', final_de_torn: 'Fi de torn', final_torn: 'Fi de torn', final: 'Fi de torn',
   mati: 'Matí', dia: 'Dia', tarda: 'Tarda', nit: 'Nit' };
 const franjaDe = r => FRANJA_ALIES[norm(r.franja)] || '';
